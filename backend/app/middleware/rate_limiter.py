@@ -14,7 +14,10 @@ def get_limiter():
     # Custom error response
     @limiter.request_filter
     def ip_whitelist():
-        # TODO: Add whitelist logic from config
+        # Exclude health check from rate limiting for monitoring
+        from flask import request
+        if request.path == '/api/health' or request.path == '/health':
+            return True
         return False
 
     return limiter
