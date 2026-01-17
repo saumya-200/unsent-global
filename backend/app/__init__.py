@@ -1,10 +1,10 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-from app import configuration
+from . import configuration
 config_by_name = configuration.config_by_name
 validate_config = configuration.validate_config
-from app.utils.logger import setup_logger
-from app.blueprints import register_blueprints
+from .utils.logger import setup_logger
+from .blueprints import register_blueprints
 import os
 
 def create_app(config_name=None):
@@ -41,7 +41,7 @@ def create_app(config_name=None):
     
     # Legacy Support: /health (redirect/alias to /api/health logic)
     # We import the view function directly or redefine a simple proxy
-    from app.blueprints.api import health_check
+    from .blueprints.api import health_check
     app.add_url_rule('/health', 'health_check_legacy', health_check, methods=['GET'])
 
     # 7. Error Handlers
