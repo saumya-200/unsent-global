@@ -1,4 +1,6 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+import { apiClient } from './api-client';
+
+export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 export interface ApiResponse<T> {
     data?: T;
@@ -6,9 +8,14 @@ export interface ApiResponse<T> {
     status: number;
 }
 
+/**
+ * Enhanced API fetcher using the new apiClient logic
+ * Maintained for backward compatibility with Phase 1
+ */
 export async function fetchFromAPI<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     try {
-        const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+        const url = `${BACKEND_URL}${endpoint}`;
+        const response = await fetch(url, {
             headers: {
                 "Content-Type": "application/json",
                 ...options.headers,
@@ -37,3 +44,7 @@ export async function fetchFromAPI<T>(endpoint: string, options: RequestInit = {
         };
     }
 }
+
+// Re-export the new version for Phase 3+
+export * from './api-client';
+export * from './types';
