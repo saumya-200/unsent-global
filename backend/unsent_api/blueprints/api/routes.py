@@ -105,16 +105,7 @@ def get_stars():
             include_message=include_message
         )
         
-        # Structure the response as requested
-        response_data = {
-            "stars": result['stars'],
-            "pagination": {
-                "total": result['total'],
-                "limit": result['limit'],
-                "offset": result['offset'],
-                "has_more": result['has_more']
-            }
-        }
+        response_data = {"data": result}
         
         # Add cache header (1 minute)
         from flask import make_response

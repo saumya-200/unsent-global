@@ -105,10 +105,12 @@ class StarService:
             
             return {
                 'stars': processed_stars,
-                'total': total_count,
-                'limit': limit,
-                'offset': offset,
-                'has_more': (offset + limit) < total_count
+                'pagination': {
+                    'total': total_count,
+                    'limit': limit,
+                    'offset': offset,
+                    'has_more': (offset + limit) < total_count
+                }
             }
         except Exception as e:
             raise DatabaseError(f"Failed to fetch stars: {str(e)}")

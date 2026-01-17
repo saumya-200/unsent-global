@@ -1,24 +1,71 @@
-import Link from "next/link";
+'use client';
+
+import { StarMap } from '@/components/StarMap';
+import { useStars } from '@/lib/hooks/useStars';
+import { Star } from '@/lib/types';
+import LoadingState from '@/components/LoadingState';
+import ErrorState from '@/components/ErrorState';
+import EmptyState from '@/components/EmptyState';
+import Header from '@/components/Header';
+import FloatingStats from '@/components/FloatingStats';
 
 export default function Home() {
+    const { stars, isLoading, error, totalCount, refresh } = useStars({
+        limit: 500,
+        order_by: 'created_at'
+    });
+
+    // Calculate top emotion
+    const emotionCounts = stars.reduce((acc, star) => {
+        acc[star.emotion] = (acc[star.emotion] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const topEmotion = Object.entries(emotionCounts)
+        .sort(([, a], [, b]) => b - a)[0]?.[0] || 'Neutral';
+
+    // Calculate total resonance
+    const totalResonance = stars.reduce((acc, star) => acc + (star.resonance_count || 0), 0);
+
+    if (isLoading && stars.length === 0) {
+        return <LoadingState />;
+    }
+
+    if (error && stars.length === 0) {
+        return <ErrorState message={error.error} onRetry={refresh} />;
+    }
+
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center relative bg-black px-4 text-center">
-            {/* Background Starfield Placeholder */}
-            <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-80" />
+        <main className="relative w-full h-screen bg-black overflow-hidden flex flex-col items-center justify-center">
+            {/* 1. Fixed Layout Overlays */}
+            <Header totalMessages={totalCount} />
 
-            <div className="z-10 animate-fade-in flex flex-col items-center gap-6">
-                <h1 className="text-5xl md:text-7xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-400 to-gray-600 font-display">
-                    UNSENT
-                </h1>
-                <p className="text-lg md:text-xl text-gray-400 max-w-lg tracking-wide">
-                    The Anonymous Map of Unspoken Human Emotion
-                </p>
+            <FloatingStats
+                totalCount={totalCount}
+                totalResonance={totalResonance}
+                topEmotion={topEmotion}
+            />
 
-                <div className="mt-8 flex items-center gap-2 text-sm text-gray-500 animate-pulse">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span>Loading constellation...</span>
-                </div>
+            {/* 2. Interactive Star Map (Absolute back layer) */}
+            <div className="absolute inset-0 z-0 h-full w-full">
+                <StarMap
+                    stars={stars}
+                    loading={isLoading && stars.length === 0}
+                    onStarClick={(star: Star) => {
+                        console.log("Selected star:", star);
+                    }}
+                />
             </div>
+
+            {/* 3. Empty State Prompt */}
+            {!isLoading && !error && stars.length === 0 && <EmptyState />}
+
+            {/* 4. Persistence Hints / Toast overlay for silent errors */}
+            {error && stars.length > 0 && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] bg-red-900/40 border border-red-500/50 backdrop-blur-xl px-4 py-2 rounded-lg text-red-200 text-[8px] tracking-[0.3em] uppercase animate-fade-in">
+                    Lost connection to some stars. Reconnecting...
+                </div>
+            )}
         </main>
     );
 }

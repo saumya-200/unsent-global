@@ -21,7 +21,8 @@ class DevelopmentConfig(BaseConfig):
     """Development configuration."""
     DEBUG = True
     LOG_LEVEL = 'DEBUG'
-    CORS_ORIGINS = ['http://localhost:3000']
+    # Allow both 3000 and 3001 in dev, or read from ENV
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001').split(',')
 
 class TestingConfig(BaseConfig):
     """Testing configuration."""
