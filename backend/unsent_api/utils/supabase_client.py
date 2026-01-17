@@ -1,7 +1,7 @@
 from supabase import create_client, Client
-from app.configuration import BaseConfig as Config
+from ..configuration import BaseConfig as Config
 import time
-from app.exceptions import DatabaseError
+from ..exceptions import DatabaseError
 
 class SupabaseClient:
     _instance = None

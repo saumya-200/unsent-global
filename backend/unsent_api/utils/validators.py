@@ -1,6 +1,6 @@
 import re
 import uuid
-from app.models.star import Emotion
+from ..models.star import Emotion
 
 def is_valid_emotion(emotion: str) -> bool:
     """Check if emotion is one of the allowed types."""

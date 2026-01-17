@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
-from app.utils.validators import sanitize_text
-from app.exceptions import ValidationError
+from .utils.validators import sanitize_text
+from .exceptions import ValidationError
 
 def validate_json(f):
     """Decorator to ensure request is JSON."""

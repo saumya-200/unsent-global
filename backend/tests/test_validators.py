@@ -3,8 +3,8 @@ import os
 sys.path.append(os.getcwd())
 
 import unittest
-from app.utils.validators import is_valid_emotion, is_valid_language, sanitize_text
-from app.models.star import Emotion
+from unsent_api.utils.validators import is_valid_emotion, is_valid_language, sanitize_text
+from unsent_api.models.star import Emotion
 
 class TestValidators(unittest.TestCase):
     def test_valid_emotions(self):

@@ -2,8 +2,8 @@ import sys
 import os
 sys.path.append(os.getcwd())
 import unittest
-from app.services.star_service import StarService
-from app.exceptions import ValidationError
+from unsent_api.services.star_service import StarService
+from unsent_api.exceptions import ValidationError
 
 class TestStarService(unittest.TestCase):
     def test_validation_error(self):

@@ -1,6 +1,6 @@
 from textblob import TextBlob
 from langdetect import detect, LangDetectException
-from app.models.star import Emotion
+from ..models.star import Emotion
 
 class NLPService:
     """Service for Natural Language Processing and Emotion Detection."""

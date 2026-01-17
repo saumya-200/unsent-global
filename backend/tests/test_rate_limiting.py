@@ -3,7 +3,7 @@ import os
 sys.path.append(os.getcwd())
 
 import unittest
-from app import create_app
+from unsent_api.import create_app
 from flask_limiter import Limiter
 
 class TestRateLimiting(unittest.TestCase):

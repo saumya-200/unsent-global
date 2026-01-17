@@ -1,4 +1,4 @@
-from app.blueprints.api import api_bp
+from .api import api_bp
 
 def register_blueprints(app):
     """Register all blueprints for the application."""

@@ -1,13 +1,13 @@
 from functools import wraps
 from flask import request
 from . import api_bp
-from app.services.star_service import StarService
-from app.services.nlp_service import NLPService
-from app.utils.response_helpers import success_response, error_response
-from app.decorators import validate_json, require_fields, sanitize_input
-from app.middleware.rate_limiter import limiter
-from app.configuration import Config
-from app.exceptions import ValidationError, DatabaseError
+from ...services.star_service import StarService
+from ...services.nlp_service import NLPService
+from ...utils.response_helpers import success_response, error_response
+from ...decorators import validate_json, require_fields, sanitize_input
+from ...middleware.rate_limiter import limiter
+from ...configuration import Config
+from ...exceptions import ValidationError, DatabaseError
 
 @api_bp.route('/submit', methods=['POST'])
 @limiter.limit("10 per hour") # Strict limit for submission

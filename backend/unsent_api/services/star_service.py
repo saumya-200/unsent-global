@@ -1,6 +1,6 @@
-from app.utils.supabase_client import SupabaseClient
-from app.models.star import Star
-from app.exceptions import DatabaseError, ValidationError, ResourceNotFoundError
+from ..utils.supabase_client import SupabaseClient
+from ..models.star import Star
+from ..exceptions import DatabaseError, ValidationError, ResourceNotFoundError
 from datetime import datetime
 import time
 

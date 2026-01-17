@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, current_app
 from datetime import datetime
-from app.utils.supabase_client import SupabaseClient
-from app.services.star_service import StarService
+from ...utils.supabase_client import SupabaseClient
+from ...services.star_service import StarService
 
 api_bp = Blueprint('api', __name__)
 
@@ -14,7 +14,7 @@ def health_check():
     db_connected, db_msg = SupabaseClient.health_check()
 
     # Feature Flags & Status
-    from app.services.nlp_service import NLPService
+    from ...services.nlp_service import NLPService
     
     nlp_available = True
     try:
@@ -47,7 +47,7 @@ def get_stats():
 @api_bp.route('/emotions', methods=['GET'])
 def get_emotions():
     """Get list of all valid emotions."""
-    from app.models.star import Emotion
+    from ...models.star import Emotion
     emotions_data = [
         {"value": "joy", "label": "Joy", "description": "Happiness and delight"},
         {"value": "sadness", "label": "Sadness", "description": "Grief and loss"},

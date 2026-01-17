@@ -4,7 +4,7 @@ sys.path.append(os.getcwd())
 
 import unittest
 from unittest.mock import patch
-from app import create_app
+from unsent_api.import create_app
 import json
 
 class TestSubmitEndpoint(unittest.TestCase):

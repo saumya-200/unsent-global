@@ -2,7 +2,7 @@ import socketio
 import eventlet
 import os
 from flask import Flask, jsonify
-from config import Config
+from unsent_api.configuration import BaseConfig as Config
 
 # Create a simple Flask app for the health check
 app = Flask(__name__)

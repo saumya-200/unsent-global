@@ -3,8 +3,8 @@ import os
 sys.path.append(os.getcwd())
 
 import unittest
-from app.services.nlp_service import NLPService
-from app.models.star import Emotion
+from unsent_api.services.nlp_service import NLPService
+from unsent_api.models.star import Emotion
 
 class TestNLPService(unittest.TestCase):
     def test_emotion_detection_keywords(self):
