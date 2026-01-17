@@ -111,6 +111,50 @@ Submits an anonymous message for emotion detection and persistence.
 
 ---
 
+### 5. Fetch Stars
+`GET /api/stars`
+
+Fetches a list of stars for the constellation map visualization.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `limit` | `int` | `100` | Max number of stars (max 500) |
+| `offset` | `int` | `0` | Pagination offset |
+| `emotion` | `string` | `null` | Filter by emotion type |
+| `order_by` | `string` | `created_at` | Sort by `created_at` or `resonance_count` |
+| `order_direction` | `string` | `desc` | `asc` or `desc` |
+| `include_message` | `bool` | `false` | If `true`, returns full `message_text`. If `false`, returns `message_preview`. |
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "stars": [
+      {
+        "id": "uuid",
+        "emotion": "joy",
+        "language": "en",
+        "resonance_count": 12,
+        "created_at": "2026-01-17T15:00:00Z",
+        "message_preview": "Thinking about the summer we spent by the sea..."
+      }
+    ],
+    "pagination": {
+      "total": 1250,
+      "limit": 100,
+      "offset": 0,
+      "has_more": true
+    }
+  }
+}
+```
+
+**Rate Limit:** 100 requests per hour per IP.
+
+---
+
 ## Testing with cURL
 
 ```bash

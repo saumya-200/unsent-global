@@ -53,8 +53,7 @@ def create_app(config_name=None):
         }), 200
     
     # Legacy Support: /health (redirect/alias to /api/health logic)
-    # We import the view function directly or redefine a simple proxy
-    from .blueprints.api import health_check
+    from .blueprints.api.routes import health_check
     app.add_url_rule('/health', 'health_check_legacy', health_check, methods=['GET'])
 
     # 7. Error Handlers

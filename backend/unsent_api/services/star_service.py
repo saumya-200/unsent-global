@@ -44,23 +44,72 @@ class StarService:
             raise DatabaseError(f"Database insertion failed: {str(e)}")
 
     @staticmethod
-    def get_stars(limit: int = 100, offset: int = 0, emotion: str = None, order_by: str = 'created_at') -> list[dict]:
-        """Fetch stars to map."""
+    def get_stars(
+        limit: int = 100,
+        offset: int = 0,
+        emotion: str = None,
+        order_by: str = 'created_at',
+        order_direction: str = 'desc',
+        include_message: bool = False
+    ) -> dict:
+        """Fetch stars to map with pagination and filtering."""
+        # 1. Validation
+        allowed_orders = ['created_at', 'resonance_count']
+        if order_by not in allowed_orders:
+            raise ValidationError(f"Invalid order_by. Must be one of: {', '.join(allowed_orders)}")
+        
+        allowed_directions = ['asc', 'desc']
+        if order_direction not in allowed_directions:
+            raise ValidationError(f"Invalid order_direction. Must be one of: {', '.join(allowed_directions)}")
+
         client = SupabaseClient.get_client()
-        query = client.table('stars').select('*')
+        
+        # 2. Build Query
+        # We need total count for pagination
+        query = client.table('stars').select('*', count='exact')
         
         if emotion:
             query = query.eq('emotion', emotion)
             
         # Order by
-        if order_by == 'resonance_count':
-            query = query.order('resonance_count', desc=True)
-        else:
-            query = query.order('created_at', desc=True)
+        is_desc = (order_direction == 'desc')
+        query = query.order(order_by, desc=is_desc)
             
         try:
             result = query.range(offset, offset + limit - 1).execute()
-            return result.data
+            stars_data = result.data
+            total_count = result.count or 0
+            
+            # 3. Process Stars (Optimizing payload)
+            processed_stars = []
+            for star in stars_data:
+                processed_star = {
+                    'id': star['id'],
+                    'emotion': star['emotion'],
+                    'language': star['language'],
+                    'resonance_count': star['resonance_count'],
+                    'created_at': star['created_at']
+                }
+                
+                if include_message:
+                    processed_star['message_text'] = star['message_text']
+                else:
+                    # Create preview
+                    msg = star.get('message_text', '')
+                    preview = msg[:50]
+                    if len(msg) > 50:
+                        preview += "..."
+                    processed_star['message_preview'] = preview
+                
+                processed_stars.append(processed_star)
+            
+            return {
+                'stars': processed_stars,
+                'total': total_count,
+                'limit': limit,
+                'offset': offset,
+                'has_more': (offset + limit) < total_count
+            }
         except Exception as e:
             raise DatabaseError(f"Failed to fetch stars: {str(e)}")
 
