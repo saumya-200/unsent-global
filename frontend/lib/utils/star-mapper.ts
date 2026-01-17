@@ -9,16 +9,30 @@ export const getStarColor = (emotion: Emotion): string => {
 };
 
 /**
+ * Calculates star core and glow size based on resonance (popularity)
+ */
+export const getResonanceSize = (resonanceCount: number): { core: number, glow: number } => {
+    if (resonanceCount <= 5) return { core: 1.5, glow: 12 };
+    if (resonanceCount <= 10) return { core: 2.0, glow: 16 };
+    if (resonanceCount <= 20) return { core: 2.5, glow: 20 };
+    return { core: 3.0, glow: 24 };
+};
+
+/**
  * Calculates star size based on resonance (popularity)
- * Scale: 1.5 to 6.0
+ * Scale: 1.5 to 6.0 (legacy)
  */
 export const getStarSize = (resonanceCount: number): number => {
-    const baseSize = VISUAL_CONSTANTS.MIN_STAR_SIZE;
-    const maxSize = VISUAL_CONSTANTS.MAX_STAR_SIZE;
+    const { core } = getResonanceSize(resonanceCount);
+    return core;
+};
 
-    // Use logarithmic scale so high resonance doesn't grow infinitely
-    const growth = Math.log10(resonanceCount + 1) * 2;
-    return Math.min(baseSize + growth, maxSize);
+/**
+ * Returns gradient colors for an emotion
+ */
+export const getEmotionGradient = (emotion: Emotion): string[] => {
+    const { EMOTION_METADATA } = require('../constants');
+    return EMOTION_METADATA[emotion]?.gradient || ['#FFFFFF', '#CCCCCC'];
 };
 
 /**
