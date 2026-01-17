@@ -79,3 +79,26 @@ def submit_message():
     except Exception as e:
         print(f"Unexpected Error: {e}")
         return error_response("An unexpected error occurred.", "SERVER_ERROR", status_code=500)
+@api_bp.route('/stars', methods=['GET'])
+def get_stars():
+    """Fetch stars for the map."""
+    limit = request.args.get('limit', default=100, type=int)
+    offset = request.args.get('offset', default=0, type=int)
+    emotion = request.args.get('emotion', default=None)
+    
+    try:
+        stars = StarService.get_stars(limit=limit, offset=offset, emotion=emotion)
+        return success_response(stars)
+    except Exception as e:
+        print(f"Error fetching stars: {e}")
+        return error_response("Failed to retrieve stars", "SERVER_ERROR", status_code=500)
+
+@api_bp.route('/stats', methods=['GET'])
+def get_stats():
+    """Get global statistics."""
+    try:
+        stats = StarService.get_stats()
+        return success_response(stats)
+    except Exception as e:
+        print(f"Error fetching stats: {e}")
+        return error_response("Failed to retrieve stats", "SERVER_ERROR", status_code=500)
