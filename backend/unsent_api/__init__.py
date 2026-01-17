@@ -38,6 +38,19 @@ def create_app(config_name=None):
     
     # 7. Register Blueprints
     register_blueprints(app)
+    # 6. Base Routes
+    @app.route('/')
+    def index():
+        return jsonify({
+            "name": "UNSENT API",
+            "version": "1.0.0",
+            "status": "online",
+            "endpoints": {
+                "health": "/api/health",
+                "emotions": "/api/emotions",
+                "stats": "/api/stats"
+            }
+        }), 200
     
     # Legacy Support: /health (redirect/alias to /api/health logic)
     # We import the view function directly or redefine a simple proxy
