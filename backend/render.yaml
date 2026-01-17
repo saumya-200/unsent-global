@@ -5,6 +5,7 @@ services:
     env: python
     region: oregon
     plan: free
+    rootDir: backend
     buildCommand: pip install -r requirements.txt && python -m textblob.download_corpora lite
     startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT
     healthCheckPath: /api/health
@@ -30,6 +31,7 @@ services:
     env: python
     region: oregon
     plan: free
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: python socket_server.py
     healthCheckPath: /socket/health
