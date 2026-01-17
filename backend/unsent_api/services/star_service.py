@@ -44,6 +44,30 @@ class StarService:
             raise DatabaseError(f"Database insertion failed: {str(e)}")
 
     @staticmethod
+    def get_star_by_id(star_id: str) -> dict:
+        """Fetch full details for a single star."""
+        client = SupabaseClient.get_client()
+        try:
+            result = client.table('stars').select('*').eq('id', star_id).execute()
+            if not result.data:
+                raise ResourceNotFoundError(f"Star {star_id} not found")
+            
+            star = result.data[0]
+            return {
+                'id': star['id'],
+                'message_text': star['message_text'],
+                'emotion': star['emotion'],
+                'language': star['language'],
+                'resonance_count': star['resonance_count'],
+                'created_at': star['created_at'],
+                'metadata': star.get('metadata', {})
+            }
+        except Exception as e:
+            if isinstance(e, ResourceNotFoundError):
+                raise e
+            raise DatabaseError(f"Failed to fetch star detail: {str(e)}")
+
+    @staticmethod
     def get_stars(
         limit: int = 100,
         offset: int = 0,

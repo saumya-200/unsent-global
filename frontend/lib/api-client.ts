@@ -87,6 +87,23 @@ class UnsentApiClient {
     }
 
     /**
+     * Fetch a single star's details by ID
+     */
+    async getStarDetail(starId: string): Promise<{ data: Star & { has_resonated: boolean } }> {
+        return this.request<{ data: Star & { has_resonated: boolean } }>(`/stars/${starId}`);
+    }
+
+    /**
+     * Resonate with a star
+     */
+    async resonate(starId: string): Promise<{ success: boolean; resonance_count: number }> {
+        return this.request<{ success: boolean; resonance_count: number }>('/resonate', {
+            method: 'POST',
+            body: JSON.stringify({ star_id: starId }),
+        });
+    }
+
+    /**
      * Submit a new message
      */
     async submitMessage(message: string): Promise<{ success: boolean; star_id: string; emotion: Emotion }> {

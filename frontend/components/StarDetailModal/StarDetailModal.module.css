@@ -1,0 +1,197 @@
+.wrapper {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    background: rgba(20, 20, 25, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 40px;
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: modalEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Glassmorphism Accents */
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.closeButton {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: full;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+.closeButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: rotate(90deg);
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.timestamp {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.2);
+    font-weight: bold;
+}
+
+/* Loading States */
+.loadingSkeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 40px 0;
+}
+
+.skeletonLine {
+    height: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    animation: pulse 1.5s infinite;
+}
+
+.skeletonLineShort {
+    width: 60%;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    animation: pulse 1.5s infinite;
+}
+
+/* Emotion Accents */
+.joy {
+    box-shadow: 0 0 100px -20px rgba(234, 179, 8, 0.15);
+}
+
+.sadness {
+    box-shadow: 0 0 100px -20px rgba(59, 130, 246, 0.15);
+}
+
+.anger {
+    box-shadow: 0 0 100px -20px rgba(239, 68, 68, 0.15);
+}
+
+.fear {
+    box-shadow: 0 0 100px -20px rgba(168, 85, 247, 0.15);
+}
+
+.gratitude {
+    box-shadow: 0 0 100px -20px rgba(16, 185, 129, 0.15);
+}
+
+.love {
+    box-shadow: 0 0 100px -20px rgba(236, 72, 153, 0.15);
+}
+
+.hope {
+    box-shadow: 0 0 100px -20px rgba(6, 182, 212, 0.15);
+}
+
+.loneliness {
+    box-shadow: 0 0 100px -20px rgba(79, 70, 229, 0.15);
+}
+
+.regret {
+    box-shadow: 0 0 100px -20px rgba(251, 146, 60, 0.15);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: perspective(1000px) translateY(40px) scale(0.95) rotateX(10deg);
+    }
+
+    to {
+        opacity: 1;
+        transform: perspective(1000px) translateY(0) scale(1) rotateX(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 32px 24px;
+        border-radius: 30px;
+    }
+
+    .footer {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .timestamp {
+        order: -1;
+    }
+}

@@ -161,6 +161,62 @@ def health_check():
         }
     })
 
+@api_bp.route('/stars/<string:star_id>', methods=['GET'])
+def get_star_detail(star_id):
+    """Fetch full details for a single star."""
+    from ...services.resonance_tracker import ResonanceTracker
+    from ...utils.ip_utils import get_client_ip
+    
+    try:
+        star = StarService.get_star_by_id(star_id)
+        
+        # Check if current user has resonated
+        client_ip = get_client_ip()
+        has_resonated = not ResonanceTracker.can_resonate(star_id, client_ip)
+        
+        star['has_resonated'] = has_resonated
+        return success_response({"data": star})
+    except Exception as e:
+        print(f"Error fetching star detail: {e}")
+        return error_response("Star not found or error occurred", "NOT_FOUND", status_code=404)
+
+@api_bp.route('/resonate', methods=['POST'])
+@limiter.limit("50 per hour")
+@validate_json
+@require_fields('star_id')
+def resonate(star_id=None):
+    """Increment resonance count for a star with duplicate prevention."""
+    from ...services.resonance_tracker import ResonanceTracker
+    from ...utils.ip_utils import get_client_ip
+    
+    data = request.get_json()
+    star_id = data.get('star_id')
+    client_ip = get_client_ip()
+
+    # 1. Prevent duplicate resonance (24h window)
+    if not ResonanceTracker.can_resonate(star_id, client_ip):
+        return error_response(
+            "You have already resonated with this star recently.", 
+            "DUPLICATE_RESONANCE", 
+            status_code=409
+        )
+
+    try:
+        # 2. Increment in DB
+        updated_star = StarService.increment_resonance(star_id)
+        
+        # 3. Track this interaction
+        ResonanceTracker.track_resonance(star_id, client_ip)
+        
+        return success_response({
+            "star_id": star_id,
+            "resonance_count": updated_star['resonance_count'],
+            "message": "Your resonance has been recorded in the cosmos."
+        })
+    except Exception as e:
+        print(f"Resonate error: {e}")
+        return error_response("Failed to resonate", "SERVER_ERROR", status_code=500)
+
 @api_bp.route('/emotions', methods=['GET'])
 def get_emotions():
     """Get list of all valid emotions."""

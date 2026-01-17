@@ -1,19 +1,30 @@
 'use client';
 
+import React, { useState } from 'react';
 import { StarMap } from '@/components/StarMap';
 import { useStars } from '@/lib/hooks/useStars';
-import { Star } from '@/lib/types';
+import { Star, Emotion } from '@/lib/types';
 import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import EmptyState from '@/components/EmptyState';
 import Header from '@/components/Header';
 import FloatingStats from '@/components/FloatingStats';
+import { StarDetailModal } from '@/components/StarDetailModal';
+import { useStarDetail } from '@/lib/hooks/useStarDetail';
 
 export default function Home() {
+    const [selectedStarId, setSelectedStarId] = useState<string | null>(null);
     const { stars, isLoading, error, totalCount, refresh } = useStars({
         limit: 500,
         order_by: 'created_at'
     });
+
+    const {
+        star: detailStar,
+        isLoading: isDetailLoading,
+        isResonating,
+        resonate
+    } = useStarDetail(selectedStarId);
 
     // Calculate top emotion
     const emotionCounts = stars.reduce((acc, star) => {
@@ -52,15 +63,25 @@ export default function Home() {
                     stars={stars}
                     loading={isLoading && stars.length === 0}
                     onStarClick={(star: Star) => {
-                        console.log("Selected star:", star);
+                        setSelectedStarId(star.id);
                     }}
                 />
             </div>
 
-            {/* 3. Empty State Prompt */}
+            {/* 3. Star Details Overlay */}
+            <StarDetailModal
+                star={detailStar}
+                isOpen={!!selectedStarId}
+                onClose={() => setSelectedStarId(null)}
+                onResonate={resonate}
+                isResonating={isResonating}
+                isLoading={isDetailLoading}
+            />
+
+            {/* 4. Empty State Prompt */}
             {!isLoading && !error && stars.length === 0 && <EmptyState />}
 
-            {/* 4. Persistence Hints / Toast overlay for silent errors */}
+            {/* 5. Persistence Hints / Toast overlay for silent errors */}
             {error && stars.length > 0 && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] bg-red-900/40 border border-red-500/50 backdrop-blur-xl px-4 py-2 rounded-lg text-red-200 text-[8px] tracking-[0.3em] uppercase animate-fade-in">
                     Lost connection to some stars. Reconnecting...
