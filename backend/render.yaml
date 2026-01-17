@@ -1,0 +1,46 @@
+services:
+  # 1. Flask REST API
+  - type: web
+    name: unsent-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: FLASK_SECRET_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.0
+
+  # 2. Socket.io Server (Separate service for better scaling/stability)
+  - type: web
+    name: unsent-socket
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python socket_server.py
+    healthCheckPath: /socket/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: FLASK_SECRET_KEY
+        sync: false
+      - key: SOCKET_CORS_ORIGINS
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.0

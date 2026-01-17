@@ -1,0 +1,11 @@
+Flask==3.0.0
+flask-cors==4.0.0
+python-socketio==5.10.0
+eventlet==0.33.3
+gunicorn==21.2.0
+supabase==2.3.0
+python-dotenv==1.0.0
+textblob==0.17.1
+googletrans==4.0.0rc1
+redis==5.0.0
+requests==2.31.0
