@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { StarMap } from '@/components/StarMap';
 import { useStars } from '@/lib/hooks/useStars';
 import { Star } from '@/lib/types';
@@ -8,6 +9,8 @@ import ErrorState from '@/components/ErrorState';
 import EmptyState from '@/components/EmptyState';
 import Header from '@/components/Header';
 import FloatingStats from '@/components/FloatingStats';
+import { StarDetailModal } from '@/components/StarMap/StarDetailModal';
+import { KnotSession } from '@/components/knot/KnotSession';
 
 export default function Home() {
     const { stars, isLoading, error, totalCount, refresh } = useStars({
@@ -26,6 +29,21 @@ export default function Home() {
 
     // Calculate total resonance
     const totalResonance = stars.reduce((acc, star) => acc + (star.resonance_count || 0), 0);
+
+    // State for Modal and Knot
+    const [selectedStar, setSelectedStar] = React.useState<Star | null>(null);
+    const [showKnotSession, setShowKnotSession] = React.useState(false);
+    const [knotStarId, setKnotStarId] = React.useState<string | null>(null);
+
+    const handleStarClick = (star: Star) => {
+        setSelectedStar(star);
+    };
+
+    const handleEnterKnot = (starId: string) => {
+        setKnotStarId(starId);
+        setShowKnotSession(true);
+        setSelectedStar(null); // Close modal
+    };
 
     if (isLoading && stars.length === 0) {
         return <LoadingState />;
@@ -51,9 +69,7 @@ export default function Home() {
                 <StarMap
                     stars={stars}
                     loading={isLoading && stars.length === 0}
-                    onStarClick={(star: Star) => {
-                        console.log("Selected star:", star);
-                    }}
+                    onStarClick={handleStarClick}
                 />
             </div>
 
@@ -65,6 +81,25 @@ export default function Home() {
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] bg-red-900/40 border border-red-500/50 backdrop-blur-xl px-4 py-2 rounded-lg text-red-200 text-[8px] tracking-[0.3em] uppercase animate-fade-in">
                     Lost connection to some stars. Reconnecting...
                 </div>
+            )}
+
+            {/* 5. Modals & Overlays */}
+            {selectedStar && (
+                <StarDetailModal
+                    star={selectedStar}
+                    onClose={() => setSelectedStar(null)}
+                    onEnterKnot={handleEnterKnot}
+                />
+            )}
+
+            {showKnotSession && knotStarId && (
+                <KnotSession
+                    starId={knotStarId}
+                    onExit={() => {
+                        setShowKnotSession(false);
+                        setKnotStarId(null);
+                    }}
+                />
             )}
         </main>
     );
