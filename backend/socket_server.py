@@ -1,5 +1,7 @@
-import socketio
 import eventlet
+eventlet.monkey_patch()
+
+import socketio
 import os
 import time
 import uuid
@@ -8,6 +10,10 @@ from unsent_api.configuration import BaseConfig as Config
 
 # Create a simple Flask app for the health check
 app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def index():
+    return "Unsent Knot Socket Server is Running", 200
 
 # Basic health check for the socket service
 @app.route('/socket/health', methods=['GET'])
