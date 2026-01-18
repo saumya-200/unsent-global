@@ -34,8 +34,12 @@ def submit_message():
         # Detect Language
         language = NLPService.detect_language(message_text)
         
-        # Detect Emotion
-        emotion = NLPService.detect_emotion(message_text)
+        # Detect Emotion (use provided if available, otherwise NLP)
+        provided_emotion = data.get('emotion')
+        if provided_emotion:
+            emotion = provided_emotion
+        else:
+            emotion = NLPService.detect_emotion(message_text)
         
         # Get Sentiment Scores
         sentiment = NLPService.get_sentiment_score(message_text)

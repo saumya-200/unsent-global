@@ -5,8 +5,10 @@ import {
     EmotionInfo,
     GetStarsParams,
     ApiError,
-    Emotion
+    Emotion,
+    CreateStarParams
 } from './types';
+
 
 class UnsentApiClient {
     private baseUrl: string;
@@ -87,13 +89,39 @@ class UnsentApiClient {
     }
 
     /**
-     * Submit a new message
+     * Create a new star
      */
-    async submitMessage(message: string): Promise<{ success: boolean; star_id: string; emotion: Emotion }> {
-        return this.request<{ success: boolean; star_id: string; emotion: Emotion }>('/submit', {
+    async createStar(params: CreateStarParams): Promise<{ success: boolean; data: Star }> {
+        // Map frontend params to backend expectation
+        const body = {
+            message: params.message_text,
+            emotion: params.emotion
+        };
+
+        const res = await this.request<any>('/submit', {
             method: 'POST',
-            body: JSON.stringify({ message }),
+            body: JSON.stringify(body),
         });
+
+        // Backend returns: { star_id, emotion, language, ... }
+        // We need to return a partial Star object so the UI can prepend it safely
+        // But looking at routes.py, it returns minimal info.
+        // We'll construct a mock Star object from the response + input
+
+        return {
+            success: true,
+            data: {
+                id: res.star_id,
+                message_text: params.message_text,
+                message_preview: params.message_text.substring(0, 50),
+                emotion: res.emotion,
+                language: 'en', // default or from response if available
+                created_at: new Date().toISOString(),
+                resonance_count: 0,
+                // defaults
+                x: 0, y: 0, z: 0, magnitude: 1.0, color: '#fff'
+            } as Star
+        };
     }
 
     /**

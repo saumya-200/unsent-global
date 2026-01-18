@@ -5,9 +5,10 @@ import { MessageSquarePlus } from 'lucide-react';
 
 interface HeaderProps {
     totalMessages: number;
+    onShareClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ totalMessages }) => {
+const Header: React.FC<HeaderProps> = ({ totalMessages, onShareClick }) => {
     return (
         <header className="fixed top-0 left-0 w-full z-50 px-8 py-10 flex items-start justify-between pointer-events-none">
             {/* Brand Section */}
@@ -38,10 +39,7 @@ const Header: React.FC<HeaderProps> = ({ totalMessages }) => {
 
                 <button
                     className="group relative flex items-center gap-3 px-8 py-3.5 bg-white text-black rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_rgba(255,255,255,0.2)] overflow-hidden"
-                    onClick={() => {
-                        // Future submission modal
-                        console.log("Open submission modal");
-                    }}
+                    onClick={onShareClick}
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/20 to-blue-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                     <MessageSquarePlus className="w-4 h-4" />

@@ -63,17 +63,28 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ roomId, isActive }
         return () => window.removeEventListener('resize', resizeCanvas);
     }, [strokes]);
 
+    // Buffer for remote strokes: senderId -> points[]
+    const remoteStrokesRef = useRef<Record<string, DrawingPoint[]>>({});
+
     // Listen for partner's draw events
     useEffect(() => {
         const handleDrawEvent = (data: any) => {
             if (!ctx) return;
 
-            const { drawing_data } = data;
+            const { drawing_data, sender_id } = data;
+            const senderId = sender_id || 'partner'; // Fallback
+
+            if (!remoteStrokesRef.current[senderId]) {
+                remoteStrokesRef.current[senderId] = [];
+            }
 
             // Handle end of stroke/clear
             if (drawing_data.type === 'end') {
-                // Could notify or just ensure stroke is finished.
-                // For remote strokes we usually just draw points as they stream in.
+                const completeStroke = remoteStrokesRef.current[senderId];
+                if (completeStroke && completeStroke.length > 0) {
+                    setStrokes(prev => [...prev, [...completeStroke]]);
+                }
+                remoteStrokesRef.current[senderId] = []; // Reset buffer
                 return;
             }
 
@@ -85,6 +96,10 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ roomId, isActive }
                 width: drawing_data.width,
             };
 
+            // Buffer the point
+            remoteStrokesRef.current[senderId].push(point);
+
+            // Draw immediately
             drawPoint(ctx, point, drawing_data.type === 'start');
         };
 

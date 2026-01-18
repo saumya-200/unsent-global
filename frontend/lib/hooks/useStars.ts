@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Star, GetStarsParams, ApiError, Emotion } from '../types';
+import { Star, GetStarsParams, ApiError, Emotion, CreateStarParams } from '../types';
 import { apiClient } from '../api-client';
 
 export const useStars = (initialParams: GetStarsParams = {}) => {
@@ -41,6 +41,23 @@ export const useStars = (initialParams: GetStarsParams = {}) => {
         }
     }, []);
 
+    const addStar = useCallback(async (params: CreateStarParams) => {
+        try {
+            const response = await apiClient.createStar(params);
+            // Optimistically add to list or just refresh
+            // Ideally we prepend it
+            const newStar = response.data;
+            if (newStar) {
+                setStars(prev => [newStar, ...prev]);
+                setPagination(prev => ({ ...prev, total: prev.total + 1 }));
+            }
+            return newStar;
+        } catch (err: any) {
+            setError(err);
+            throw err;
+        }
+    }, []);
+
     // Load more data
     const loadMore = useCallback(() => {
         if (pagination.has_more && !isLoading) {
@@ -78,6 +95,7 @@ export const useStars = (initialParams: GetStarsParams = {}) => {
         hasMore: pagination.has_more,
         loadMore,
         refresh,
+        addStar, // Exported now
         totalCount: pagination.total
     };
 };

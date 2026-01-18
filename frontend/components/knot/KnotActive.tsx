@@ -44,7 +44,7 @@ export const KnotActive: React.FC<KnotActiveProps> = ({ session, onLeave }) => {
                 </div>
 
                 <CountdownTimer
-                    remainingSeconds={session.remainingSeconds}
+                    targetDate={new Date((session.startedAt || Date.now() / 1000) * 1000 + (session.remainingSeconds || 1800) * 1000)}
                     onWarning={handleWarning}
                 />
 

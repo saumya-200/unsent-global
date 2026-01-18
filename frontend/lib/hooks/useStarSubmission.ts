@@ -13,21 +13,14 @@ export const useStarSubmission = () => {
         setSubmittedStar(null);
 
         try {
-            const response = await apiClient.submitMessage(message);
+            const response = await apiClient.createStar({ message_text: message });
 
-            // We create a local Star object based on the response
-            const newStar: Star = {
-                id: response.star_id,
-                emotion: response.emotion,
-                language: 'en', // Backend detects this, but common default
-                resonance_count: 0,
-                created_at: new Date().toISOString(),
-                message_preview: message.slice(0, 50) + (message.length > 50 ? '...' : ''),
-                message_text: message
-            };
-
-            setSubmittedStar(newStar);
-            return newStar;
+            if (response.success && response.data) {
+                const newStar = response.data;
+                setSubmittedStar(newStar);
+                return newStar;
+            }
+            return null;
         } catch (err: any) {
             setError(err);
             return null;

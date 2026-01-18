@@ -9,13 +9,22 @@ import { ParticleBackground } from './effects/ParticleBackground';
 
 interface KnotSessionProps {
     starId: string;
+    roomId: string; // New required prop
     onExit: () => void;
 }
 
-export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
-    const [sessionData, setSessionData] = useState<KnotSessionType | null>(null);
+export const KnotSession: React.FC<KnotSessionProps> = ({ starId, roomId, onExit }) => {
+    // Initialize directly into active state since we only mount this after handshake
+    const [sessionData, setSessionData] = useState<KnotSessionType | null>({
+        roomId: roomId,
+        starId: starId,
+        state: 'active',
+        partnerCount: 2,
+        remainingSeconds: 1800,
+        startedAt: Date.now() / 1000
+    });
     const [error, setError] = useState<string | null>(null);
-    const [connectionState, setConnectionState] = useState<'connected' | 'connecting' | 'disconnected'>('connecting');
+    const [connectionState, setConnectionState] = useState<'connected' | 'connecting' | 'disconnected'>('connected');
 
     useEffect(() => {
         const socket = socketService.connect();
@@ -28,33 +37,12 @@ export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
         // Socket.io standard events
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
-        // @ts-ignore - access internal io manager
+        // @ts-ignore
         socket.io.on('reconnect_attempt', onReconnectAttempt);
 
-        // Request to enter knot
-        socketService.requestKnot(starId);
+        // REMOVED: requestKnot(starId) - we are already in the session.
 
         // Session event listeners
-        const handleWaiting = (data: { room_id: string }) => {
-            setSessionData({
-                roomId: data.room_id,
-                starId: starId,
-                state: 'waiting',
-                partnerCount: 1,
-                remainingSeconds: 1800 // Default 30 mins
-            });
-        };
-
-        const handleKnotStarted = (data: { room_id: string; start_time: number; partner_count: number; duration: number }) => {
-            setSessionData(prev => ({
-                roomId: data.room_id,
-                starId: starId,
-                state: 'active',
-                partnerCount: data.partner_count || 2,
-                remainingSeconds: data.duration || 1800,
-                startedAt: data.start_time
-            }));
-        };
 
         const handleTimerUpdate = (data: { remaining_seconds: number }) => {
             setSessionData(prev => prev ? ({
@@ -67,7 +55,7 @@ export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
             setSessionData(prev => prev ? ({
                 ...prev,
                 state: 'ended',
-                endReason: data.reason as any // Cast string to union type (safe enough for now)
+                endReason: data.reason as any
             }) : null);
         };
 
@@ -76,8 +64,8 @@ export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
         };
 
         // Use typed service listeners
-        socketService.onWaitingForPartner(handleWaiting as any); // Adapt payload
-        socketService.onKnotStarted(handleKnotStarted as any);
+        // socketService.onWaitingForPartner... (Removed)
+        // socketService.onKnotStarted... (We rely on initial state now, but keep for updates if needed?)
         socketService.onTimerUpdate(handleTimerUpdate as any);
         socketService.onSessionEnded(handleSessionEnded as any);
         socketService.onError(handleError);

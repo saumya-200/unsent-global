@@ -114,12 +114,51 @@ class SocketService {
         }
         // Small delay to ensure connection or retry immediately if connected
         if (this.socket?.connected) {
+            console.log('Emitting request_knot for star:', starId);
             this.socket.emit('request_knot', { star_id: starId });
         } else {
             // Wait for connection then emit (basic handling)
             this.socket?.once('connect', () => {
                 this.socket?.emit('request_knot', { star_id: starId });
             });
+        }
+    }
+
+    // --- New Request-Accept Flow ---
+
+    // Claim ownership of a star (so others can request to connect)
+    claimStar(starId: string): void {
+        this.ensureConnection(() => {
+            this.socket?.emit('claim_star', { star_id: starId });
+        });
+    }
+
+    // Request to connect with a star's author
+    requestConnection(starId: string): void {
+        this.ensureConnection(() => {
+            this.socket?.emit('request_connection', { star_id: starId });
+        });
+    }
+
+    // Accept an incoming connection request
+    acceptRequest(requestId: string): void {
+        if (!this.socket?.connected) return;
+        this.socket.emit('accept_request', { request_id: requestId });
+    }
+
+    // Reject an incoming connection request
+    rejectRequest(requestId: string): void {
+        if (!this.socket?.connected) return;
+        this.socket.emit('reject_request', { request_id: requestId });
+    }
+
+    // Helper to ensure connection before emitting
+    private ensureConnection(action: () => void): void {
+        if (!this.socket?.connected) {
+            this.connect();
+            this.socket?.once('connect', action);
+        } else {
+            action();
         }
     }
 
@@ -141,23 +180,26 @@ class SocketService {
         this.socket.emit('draw_event', { room_id: roomId, drawing_data: drawingData });
     }
 
-    // Get session info
-    getSessionInfo(roomId: string): void {
-        if (!this.socket?.connected) return;
-        this.socket.emit('get_session_info', { room_id: roomId });
+    // --- Listeners ---
+
+    // Connection established
+    onConnected(callback: () => void): void {
+        this.socket?.on('connect', callback);
     }
 
-    // Event listeners with TypeScript typing
-    onConnected(callback: (data: { socket_id: string }) => void): void {
-        this.socket?.on('connected', callback);
+    // Incoming connection request (for Owner)
+    onIncomingRequest(callback: (data: { request_id: string; star_id: string; message: string }) => void): void {
+        this.socket?.on('incoming_request', callback);
     }
 
-    onWaitingForPartner(callback: (data: WaitingForPartnerPayload) => void): void {
-        this.socket?.on('waiting_for_partner', callback);
-    }
-
+    // Knot started (Both)
     onKnotStarted(callback: (data: KnotStartedPayload) => void): void {
         this.socket?.on('knot_started', callback);
+    }
+
+    // Request rejected (for Requester)
+    onRequestRejected(callback: (data: { message: string }) => void): void {
+        this.socket?.on('request_rejected', callback);
     }
 
     onTimerUpdate(callback: (data: TimerUpdatePayload) => void): void {
@@ -172,20 +214,12 @@ class SocketService {
         this.socket?.on('session_ended', callback);
     }
 
-    onPartnerLeft(callback: (data: PartnerLeftPayload) => void): void {
-        this.socket?.on('partner_left', callback);
-    }
-
     onChatMessage(callback: (data: ChatMessagePayload) => void): void {
         this.socket?.on('chat_message', callback);
     }
 
     onDrawEvent(callback: (data: DrawEventPayload) => void): void {
         this.socket?.on('draw_event', callback);
-    }
-
-    onSessionInfo(callback: (data: any) => void): void {
-        this.socket?.on('session_info', callback);
     }
 
     onError(callback: (data: { message: string }) => void): void {

@@ -2,25 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CountdownTimerProps {
-    remainingSeconds: number;
+    targetDate: Date;
     onWarning?: (seconds: number) => void;
 }
 
 export const CountdownTimer: React.FC<CountdownTimerProps> = ({
-    remainingSeconds,
+    targetDate,
     onWarning,
 }) => {
-    const [prevSeconds, setPrevSeconds] = useState(remainingSeconds);
+    const calculateRemaining = () => Math.max(0, Math.floor((targetDate.getTime() - Date.now()) / 1000));
+    const [remainingSeconds, setRemainingSeconds] = useState(calculateRemaining());
 
     useEffect(() => {
-        // Trigger warnings
-        if (remainingSeconds === 300 && prevSeconds > 300) {
-            onWarning?.(300); // 5 minutes
-        } else if (remainingSeconds === 60 && prevSeconds > 60) {
-            onWarning?.(60); // 1 minute
-        }
-        setPrevSeconds(remainingSeconds);
-    }, [remainingSeconds, prevSeconds, onWarning]);
+        const timer = setInterval(() => {
+            const left = calculateRemaining();
+            setRemainingSeconds(left);
+
+            // Warnings
+            if (left === 300) onWarning?.(300);
+            if (left === 60) onWarning?.(60);
+
+            if (left <= 0) clearInterval(timer);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [targetDate, onWarning]);
 
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);

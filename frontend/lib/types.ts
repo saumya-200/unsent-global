@@ -50,6 +50,11 @@ export interface StarsResponse {
 /**
  * Global statistics response
  */
+export interface CreateStarParams {
+    message_text: string;
+    emotion?: string;
+}
+
 export interface StatsResponse {
     success: boolean;
     total_stars: number;
