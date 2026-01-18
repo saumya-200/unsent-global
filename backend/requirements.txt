@@ -1,9 +1,10 @@
-# Production Stable Stack (Python 3.13 Compatible)
+# Production Stable Stack (Gevent Variant)
 Flask==2.2.5
 Werkzeug==2.2.3
 flask-cors==3.0.10
 python-socketio==5.10.0
-eventlet==0.36.1
+gevent
+gevent-websocket
 gunicorn
 supabase
 python-dotenv

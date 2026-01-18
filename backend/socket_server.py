@@ -1,5 +1,4 @@
-import eventlet
-# eventlet.monkey_patch() # Handled by Gunicorn -k eventlet
+# import eventlet # REMOVED: Switched to Gevent
 
 import socketio
 import os
@@ -13,7 +12,7 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def index():
-    return "Unsent Knot Socket Server is Running", 200
+    return "Unsent Knot Socket Server is Running (Gevent)", 200
 
 # Basic health check for the socket service
 @app.route('/socket/health', methods=['GET'])
@@ -32,7 +31,7 @@ if len(cors_origins) == 1 and cors_origins[0] == '*':
 
 sio = socketio.Server(
     cors_allowed_origins=cors_origins, 
-    async_mode='eventlet',
+    async_mode='gevent',
     logger=True, # Enable logs for production debugging
     engineio_logger=True
 )
@@ -218,10 +217,29 @@ def handle_draw(sid, data):
             'drawing_data': drawing_data
         }, room=room_id, skip_sid=sid)
 
+# Configure Socket.IO
+# Allow specific origins in production, default to '*' for dev
+cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', '*').split(',')
+if len(cors_origins) == 1 and cors_origins[0] == '*':
+    cors_origins = '*'
+
+sio = socketio.Server(
+    cors_allowed_origins=cors_origins, 
+    async_mode='gevent',
+    logger=True, # Enable logs for production debugging
+    engineio_logger=True
+)
+
+# ... (rest of the file is unchanged until the bottom) ...
+
 if __name__ == '__main__':
+    from gevent.pywsgi import WSGIServer
+    from geventwebsocket.handler import WebSocketHandler
+
     # Force 5002 if 'PORT' gives us 5000 (which is the default API port)
     env_port = int(os.getenv('PORT', 5002))
     port = 5002 if env_port == 5000 else env_port
     
-    print(f"Starting Socket.IO server on port {port}")
-    eventlet.wsgi.server(eventlet.listen(('0.0.0.0', port)), app)
+    print(f"Starting Socket.IO server (Gevent) on port {port}")
+    http_server = WSGIServer(('0.0.0.0', port), app, handler_class=WebSocketHandler)
+    http_server.serve_forever()
