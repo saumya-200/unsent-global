@@ -5,14 +5,15 @@ import os
 import time
 import uuid
 from flask import Flask, jsonify
+from unsent_api import create_app # Import the real API factory
 from unsent_api.configuration import BaseConfig as Config
 
-# Create a simple Flask app for the health check
-app = Flask(__name__)
+# Initialize the full API app (combines REST + Sockets)
+# This includes all /api/* routes defined in unsent_api
+app = create_app(os.getenv('FLASK_ENV', 'production'))
 
-@app.route('/', methods=['GET'])
-def index():
-    return "Unsent Knot Socket Server is Running (Gevent)", 200
+# Note: create_app() already defines a '/' route returning JSON status.
+# We don't need to override it unless we really want the simple text message.
 
 # Basic health check for the socket service
 @app.route('/socket/health', methods=['GET'])
