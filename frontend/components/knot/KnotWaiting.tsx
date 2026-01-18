@@ -1,9 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export const KnotWaiting: React.FC = () => {
+interface KnotWaitingProps {
+    onCancel: () => void;
+}
+
+export const KnotWaiting: React.FC<KnotWaitingProps> = ({ onCancel }) => {
     return (
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center h-full relative">
+            <button
+                onClick={onCancel}
+                className="absolute top-4 right-4 z-20 text-xs text-white/50 hover:text-white border border-white/20 hover:border-white/50 px-4 py-2 rounded-full transition-all backdrop-blur-md"
+            >
+                Cancel & Exit
+            </button>
             <div className="text-center space-y-8">
                 {/* Animated pulse circle */}
                 <div className="relative flex items-center justify-center">

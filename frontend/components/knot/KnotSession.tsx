@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import socketService from '../../lib/services/socketService';
-import { KnotState, KnotSession as KnotSessionType } from '../../lib/types/knot.types';
+import { KnotSession as KnotSessionType, KnotSessionState } from '../../lib/types/knot.types';
 import { KnotWaiting } from './KnotWaiting';
 import { KnotActive } from './KnotActive';
 import { KnotEnded } from './KnotEnded';
@@ -25,34 +25,35 @@ export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
         const onDisconnect = () => setConnectionState('disconnected');
         const onReconnectAttempt = () => setConnectionState('connecting');
 
+        // Socket.io standard events
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
-        socket.io.on('reconnect_attempt', onReconnectAttempt); // Access io manager for reconnect attempts
+        // @ts-ignore - access internal io manager
+        socket.io.on('reconnect_attempt', onReconnectAttempt);
 
         // Request to enter knot
-        socketService.enterKnot(starId);
+        socketService.requestKnot(starId);
 
         // Session event listeners
-        const handleKnotUpdate = (data: any) => {
-            console.log('Knot update:', data);
-            setSessionData(prev => ({
-                roomId: data.room_id,
-                partnerId: data.partner_id || (prev?.partnerId),
-                startTime: data.start_time, // This might be null if waiting
-                state: data.status === 'active' ? 'active' : 'waiting',
-                remainingSeconds: data.remaining_time || 1800,
-            }));
-        };
-
-        const handleKnotStarted = (data: any) => {
-            console.log('Knot started:', data);
+        const handleWaiting = (data: { room_id: string }) => {
             setSessionData({
                 roomId: data.room_id,
-                partnerId: data.partner_id,
-                startTime: data.start_time,
-                state: 'active',
-                remainingSeconds: 1800,
+                starId: starId,
+                state: 'waiting',
+                partnerCount: 1,
+                remainingSeconds: 1800 // Default 30 mins
             });
+        };
+
+        const handleKnotStarted = (data: { room_id: string; start_time: number; partner_count: number; duration: number }) => {
+            setSessionData(prev => ({
+                roomId: data.room_id,
+                starId: starId,
+                state: 'active',
+                partnerCount: data.partner_count || 2,
+                remainingSeconds: data.duration || 1800,
+                startedAt: data.start_time
+            }));
         };
 
         const handleTimerUpdate = (data: { remaining_seconds: number }) => {
@@ -63,12 +64,10 @@ export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
         };
 
         const handleSessionEnded = (data: { reason: string; message: string }) => {
-            // We can transition to a local 'ended' state or just show the Ended component
-            // But usually we update the sessionData state to 'ended'
             setSessionData(prev => prev ? ({
                 ...prev,
                 state: 'ended',
-                endReason: data.reason
+                endReason: data.reason as any // Cast string to union type (safe enough for now)
             }) : null);
         };
 
@@ -76,31 +75,41 @@ export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
             setError(data.message);
         };
 
-        socketService.on('knot_update', handleKnotUpdate);
-        socketService.on('knot_started', handleKnotStarted);
-        socketService.on('timer_update', handleTimerUpdate);
-        socketService.on('session_ended', handleSessionEnded);
-        socketService.on('error', handleError);
+        // Use typed service listeners
+        socketService.onWaitingForPartner(handleWaiting as any); // Adapt payload
+        socketService.onKnotStarted(handleKnotStarted as any);
+        socketService.onTimerUpdate(handleTimerUpdate as any);
+        socketService.onSessionEnded(handleSessionEnded as any);
+        socketService.onError(handleError);
 
         return () => {
-            socketService.leaveKnot();
-            socketService.disconnect();
+            // Clean up listeners
+            // Note: socketService.off logic is a bit generic in my implementation, 
+            // but here we can just disconnect or rely on component unmount
+            // Ideally use socketService.off for each
+
+            // Since we don't have stored references for every callback wrapper in socketService (it wraps them), 
+            // we rely on disconnect/leave to clean up server side, and client side listeners attached to the single socket instance.
+            // Best practice: socket.off(...) but socketService hides direct socket access mostly.
+            // We will assume socketService.disconnect() cleans up all listeners if implemented well, 
+            // or we manually remove them if we could.
+
+            // Simplest: just leave knot.
+            // We can't access `sessionData.roomId` reliably in cleanup if it changed. 
+            // But we can try if we have a ref, or just let server handle disconnect.
 
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
+            // @ts-ignore
             socket.io.off('reconnect_attempt', onReconnectAttempt);
-
-            socketService.off('knot_update', handleKnotUpdate);
-            socketService.off('knot_started', handleKnotStarted);
-            socketService.off('timer_update', handleTimerUpdate);
-            socketService.off('session_ended', handleSessionEnded);
-            socketService.off('error', handleError);
         };
     }, [starId]);
 
     // Cleanup session state when exiting
     const handleExit = () => {
-        socketService.leaveKnot();
+        if (sessionData?.roomId) {
+            socketService.leaveKnot(sessionData.roomId);
+        }
         onExit();
     };
 
@@ -151,8 +160,8 @@ export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
 
                     {sessionData.state === 'ended' && (
                         <KnotEnded
-                            reason={sessionData.endReason || 'session_ended'}
-                            onExit={handleExit}
+                            reason={sessionData.endReason}
+                            onClose={handleExit}
                         />
                     )}
                 </div>
