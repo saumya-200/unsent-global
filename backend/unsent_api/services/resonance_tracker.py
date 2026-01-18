@@ -42,3 +42,18 @@ class ResonanceTracker:
             }).execute()
         except Exception as e:
             print(f"Failed to track resonance: {e}")
+
+    @staticmethod
+    def untrack_resonance(star_id: str, ip_address: str) -> bool:
+        """Remove a resonance tracking record, allowing user to resonate again."""
+        client = SupabaseClient.get_client()
+        try:
+            result = client.table('resonance_trackers') \
+                .delete() \
+                .eq('star_id', star_id) \
+                .eq('ip_address', ip_address) \
+                .execute()
+            return True
+        except Exception as e:
+            print(f"Failed to untrack resonance: {e}")
+            return False

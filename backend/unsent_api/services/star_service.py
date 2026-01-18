@@ -144,14 +144,55 @@ class StarService:
         """Increment resonance count for a star atomically."""
         client = SupabaseClient.get_client()
         try:
-            client.rpc('increment_resonance', {'star_row_id': star_id}).execute()
+            # 1. Try RPC First (Efficient)
+            try:
+                client.rpc('increment_resonance', {'star_row_id': star_id}).execute()
+            except Exception as rpc_err:
+                # If RPC fails (e.g. schema cache issues often found in local/managed Supabase), 
+                # fall back to a manual atomic increment if possible, or just a fetch-reset.
+                # Since Postgrest doesn't support 'increment' directly in old versions without RPC,
+                # we do a fetch-and-update for the fallback.
+                print(f"RPC Resonance failed, falling back: {rpc_err}")
+                current = client.table('stars').select('resonance_count').eq('id', star_id).execute()
+                if not current.data:
+                    raise ResourceNotFoundError(f"Star {star_id} not found")
+                
+                new_count = (current.data[0].get('resonance_count') or 0) + 1
+                client.table('stars').update({'resonance_count': new_count}).eq('id', star_id).execute()
+
+            # 2. Fetch updated star
+            updated = client.table('stars').select('*').eq('id', star_id).execute()
+            if not updated.data:
+                 raise ResourceNotFoundError(f"Star {star_id} not found")
+            return updated.data[0]
+        except Exception as e:
+            print(f"Final resonance failure for {star_id}: {e}")
+            raise DatabaseError(f"Failed to resonate: {str(e)}")
+
+    @staticmethod
+    def decrement_resonance(star_id: str) -> dict:
+        """Decrement resonance count for a star (min 0)."""
+        client = SupabaseClient.get_client()
+        try:
+            # Fetch current count
+            current = client.table('stars').select('resonance_count').eq('id', star_id).execute()
+            if not current.data:
+                raise ResourceNotFoundError(f"Star {star_id} not found")
+            
+            current_count = current.data[0].get('resonance_count') or 0
+            new_count = max(0, current_count - 1)
+            
+            # Update
+            client.table('stars').update({'resonance_count': new_count}).eq('id', star_id).execute()
+
             # Fetch updated star
             updated = client.table('stars').select('*').eq('id', star_id).execute()
             if not updated.data:
                  raise ResourceNotFoundError(f"Star {star_id} not found")
             return updated.data[0]
         except Exception as e:
-            raise DatabaseError(f"Failed to resonate: {str(e)}")
+            print(f"Decrement resonance failure for {star_id}: {e}")
+            raise DatabaseError(f"Failed to unresonate: {str(e)}")
 
     @classmethod
     def get_stats(cls) -> dict:

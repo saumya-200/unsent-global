@@ -38,7 +38,15 @@ def create_app(config_name=None):
     
     # 7. Register Blueprints
     register_blueprints(app)
-    # 6. Base Routes
+
+    # 8. Initialize SocketIO
+    from .services.socket_service import SocketService
+    SocketService.init_app(app, cors_allowed_origins=origins)
+    
+    # 9. Register Socket Events (must be after init)
+    from .blueprints.api import events
+
+    # 10. Base Routes
     @app.route('/')
     def index():
         return jsonify({

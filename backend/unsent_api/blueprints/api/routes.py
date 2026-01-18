@@ -62,6 +62,10 @@ def submit_message():
             metadata=metadata
         )
         
+        # Broadcast new star event
+        from ...services.socket_service import SocketService
+        SocketService.emit_new_star(star)
+        
         return success_response({
             "star_id": star['id'],
             "emotion": star['emotion'],
@@ -208,6 +212,10 @@ def resonate(star_id=None):
         # 3. Track this interaction
         ResonanceTracker.track_resonance(star_id, client_ip)
         
+        # Broadcast resonance update
+        from ...services.socket_service import SocketService
+        SocketService.emit_resonance_update(star_id, updated_star['resonance_count'])
+
         return success_response({
             "star_id": star_id,
             "resonance_count": updated_star['resonance_count'],
@@ -216,6 +224,48 @@ def resonate(star_id=None):
     except Exception as e:
         print(f"Resonate error: {e}")
         return error_response("Failed to resonate", "SERVER_ERROR", status_code=500)
+
+@api_bp.route('/resonate', methods=['DELETE'])
+@limiter.limit("50 per hour")
+@validate_json
+@require_fields('star_id')
+def unresonate(star_id=None):
+    """Decrement resonance count and remove tracker (un-resonate)."""
+    from ...services.resonance_tracker import ResonanceTracker
+    from ...utils.ip_utils import get_client_ip
+    
+    data = request.get_json()
+    star_id = data.get('star_id')
+    client_ip = get_client_ip()
+
+    # 1. Check if they actually have a resonance record to remove
+    if ResonanceTracker.can_resonate(star_id, client_ip):
+        # They haven't resonated recently, nothing to remove
+        return error_response(
+            "You haven't resonated with this star.", 
+            "NOT_RESONATED", 
+            status_code=400
+        )
+
+    try:
+        # 2. Decrement in DB
+        updated_star = StarService.decrement_resonance(star_id)
+        
+        # 3. Remove the tracking record
+        ResonanceTracker.untrack_resonance(star_id, client_ip)
+        
+        # Broadcast resonance update
+        from ...services.socket_service import SocketService
+        SocketService.emit_resonance_update(star_id, updated_star['resonance_count'])
+        
+        return success_response({
+            "star_id": star_id,
+            "resonance_count": updated_star['resonance_count'],
+            "message": "Your resonance has been withdrawn from the cosmos."
+        })
+    except Exception as e:
+        print(f"Unresonate error: {e}")
+        return error_response("Failed to unresonate", "SERVER_ERROR", status_code=500)
 
 @api_bp.route('/emotions', methods=['GET'])
 def get_emotions():
