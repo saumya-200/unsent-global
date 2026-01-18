@@ -217,20 +217,6 @@ def handle_draw(sid, data):
             'drawing_data': drawing_data
         }, room=room_id, skip_sid=sid)
 
-# Configure Socket.IO
-# Allow specific origins in production, default to '*' for dev
-cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', '*').split(',')
-if len(cors_origins) == 1 and cors_origins[0] == '*':
-    cors_origins = '*'
-
-sio = socketio.Server(
-    cors_allowed_origins=cors_origins, 
-    async_mode='gevent',
-    logger=True, # Enable logs for production debugging
-    engineio_logger=True
-)
-
-# ... (rest of the file is unchanged until the bottom) ...
 
 if __name__ == '__main__':
     from gevent.pywsgi import WSGIServer
