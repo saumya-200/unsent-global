@@ -1,61 +1,41 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Star, ApiError } from '../types';
-import { apiClient } from '../api-client';
+import { useState, useCallback } from 'react';
+import { Star, ApiError } from '@/lib/types';
+import { apiClient } from '@/lib/api-client';
 
-export const useStarDetail = (starId: string | null) => {
-    const [star, setStar] = useState<(Star & { has_resonated: boolean }) | null>(null);
+export function useStarDetail() {
+    const [star, setStar] = useState<Star | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [isResonating, setIsResonating] = useState(false);
     const [error, setError] = useState<ApiError | null>(null);
+    const [hasResonated, setHasResonated] = useState(false);
 
-    const fetchDetail = useCallback(async (id: string) => {
+    const fetchStarDetail = useCallback(async (starId: string) => {
         setIsLoading(true);
         setError(null);
+
         try {
-            const response = await apiClient.getStarDetail(id);
-            setStar(response.data);
+            const response = await apiClient.getStarById(starId);
+            setStar(response.star);
+            setHasResonated(response.has_resonated || false);
         } catch (err: any) {
             setError(err);
+            setStar(null);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
-    const resonate = useCallback(async () => {
-        if (!star || star.has_resonated || isResonating) return;
-
-        setIsResonating(true);
-        try {
-            const response = await apiClient.resonate(star.id);
-            if (response.success) {
-                setStar(prev => prev ? {
-                    ...prev,
-                    resonance_count: response.resonance_count,
-                    has_resonated: true
-                } : null);
-            }
-        } catch (err: any) {
-            // Keep error local to resonance button if needed, or propagate
-            console.error("Resonance failed:", err);
-        } finally {
-            setIsResonating(false);
-        }
-    }, [star, isResonating]);
-
-    useEffect(() => {
-        if (starId) {
-            fetchDetail(starId);
-        } else {
-            setStar(null);
-        }
-    }, [starId, fetchDetail]);
+    const reset = useCallback(() => {
+        setStar(null);
+        setError(null);
+        setHasResonated(false);
+    }, []);
 
     return {
         star,
         isLoading,
-        isResonating,
         error,
-        resonate,
-        refresh: () => starId && fetchDetail(starId)
+        hasResonated,
+        fetchStarDetail,
+        reset
     };
-};
+}

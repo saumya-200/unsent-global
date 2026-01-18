@@ -73,6 +73,7 @@ export const useStars = (initialParams: GetStarsParams = {}) => {
 
     return {
         stars,
+        setStars,
         isLoading,
         error,
         hasMore: pagination.has_more,

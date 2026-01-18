@@ -36,6 +36,15 @@
     animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
+  .animate-sparkle {
+    animation: sparkle 1s ease-out forwards;
+    animation-delay: var(--delay, 0s);
+  }
+
+  .animate-ripple {
+    animation: ripple 0.8s ease-out forwards;
+  }
+
   .font-display {
     font-family: var(--font-outfit), sans-serif;
   }
@@ -50,5 +59,35 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    transform: scale(0) translate(0, 0);
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.5) translate(var(--tx), var(--ty));
+    opacity: 0;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+    border-width: 4px;
+  }
+
+  100% {
+    transform: scale(4);
+    opacity: 0;
+    border-width: 0px;
   }
 }

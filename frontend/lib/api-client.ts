@@ -104,6 +104,16 @@ class UnsentApiClient {
     }
 
     /**
+     * Unresonate with a star (toggle off)
+     */
+    async unresonate(starId: string): Promise<{ success: boolean; resonance_count: number }> {
+        return this.request<{ success: boolean; resonance_count: number }>('/resonate', {
+            method: 'DELETE',
+            body: JSON.stringify({ star_id: starId }),
+        });
+    }
+
+    /**
      * Submit a new message
      */
     async submitMessage(message: string): Promise<{ success: boolean; star_id: string; emotion: Emotion }> {
@@ -129,14 +139,14 @@ class UnsentApiClient {
     }
 
     /**
-     * Fetch a single star by ID
+     * Fetch a single star by ID with resonance status
      */
-    async getStarById(id: string): Promise<Star> {
-        // Currently implementation: fetch with filter (or we could add a dedicated GET /stars/:id)
-        const res = await this.getStars({ limit: 1, include_message: true });
-        const star = res.data.stars.find(s => s.id === id);
-        if (!star) throw { error: 'Star not found', code: 'NOT_FOUND', status: 404 };
-        return star;
+    async getStarById(starId: string): Promise<{ star: Star, has_resonated: boolean }> {
+        const res = await this.request<{ data: Star & { has_resonated: boolean } }>(`/stars/${starId}`);
+        return {
+            star: res.data,
+            has_resonated: res.data.has_resonated
+        };
     }
 }
 

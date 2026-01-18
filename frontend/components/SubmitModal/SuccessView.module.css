@@ -1,0 +1,139 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0;
+    animation: fadeIn 0.5s ease;
+}
+
+.iconWrapper {
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 50%;
+    margin-bottom: 24px;
+    animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.title {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 24px 0;
+    letter-spacing: -0.01em;
+}
+
+.emotionBadge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    margin-bottom: 16px;
+}
+
+.emoji {
+    font-size: 24px;
+}
+
+.emotionLabel {
+    display: block;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 700;
+}
+
+.emotionValue {
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    text-transform: capitalize;
+}
+
+.resonanceInfo {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 28px;
+}
+
+.highlight {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.viewButton,
+.shareButton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.viewButton {
+    background: white;
+    color: black;
+    border: none;
+}
+
+.viewButton:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+}
+
+.shareButton {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.shareButton:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
