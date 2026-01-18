@@ -1,8 +1,9 @@
+# Production Stable Stack (Do not upgrade Flask/Werkzeug)
 Flask==2.2.5
 Werkzeug==2.2.3
-flask-cors
-python-socketio
-eventlet
+flask-cors==3.0.10
+python-socketio==5.10.0
+eventlet==0.33.3
 gunicorn
 supabase
 python-dotenv
@@ -10,7 +11,7 @@ textblob==0.17.1
 redis
 requests
 pydantic
-Flask-Limiter==3.5.0
+Flask-Limiter==2.8.1
 better-profanity==0.7.0
 langdetect==1.0.9
 nltk==3.8.1
