@@ -18,15 +18,18 @@ export const KnotActive: React.FC<KnotActiveProps> = ({ session, onLeave }) => {
             </div>
 
             {/* Main content area */}
-            <div className="flex-1 flex flex-col md:flex-row">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden pb-4 px-2 gap-2">
                 {/* Drawing canvas placeholder */}
-                <div className="flex-1 bg-white/5 backdrop-blur-sm m-2 rounded-lg flex items-center justify-center">
+                <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/5">
                     <p className="text-gray-400">Drawing Canvas (Phase 7D)</p>
                 </div>
 
-                {/* Chat placeholder */}
-                <div className="flex-1 md:max-w-md bg-white/5 backdrop-blur-sm m-2 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-400">Chat Interface (Phase 7C)</p>
+                {/* Chat Interface */}
+                <div className="flex-1 md:max-w-md h-[40vh] md:h-auto">
+                    <ChatInterface
+                        roomId={session.roomId}
+                        isActive={session.state === 'active'}
+                    />
                 </div>
             </div>
         </div>
