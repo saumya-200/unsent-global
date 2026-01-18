@@ -1,9 +1,9 @@
-# Production Stable Stack (Do not upgrade Flask/Werkzeug)
+# Production Stable Stack (Python 3.13 Compatible)
 Flask==2.2.5
 Werkzeug==2.2.3
 flask-cors==3.0.10
 python-socketio==5.10.0
-eventlet==0.33.3
+eventlet==0.36.1
 gunicorn
 supabase
 python-dotenv
