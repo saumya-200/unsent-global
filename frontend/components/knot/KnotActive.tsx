@@ -1,5 +1,6 @@
 import React from 'react';
 import { KnotSession } from '../../lib/types/knot.types';
+import { ChatInterface } from './chat/ChatInterface';
 
 interface KnotActiveProps {
     session: KnotSession;
