@@ -1,5 +1,5 @@
 import eventlet
-eventlet.monkey_patch()
+# eventlet.monkey_patch() # Handled by Gunicorn -k eventlet
 
 import socketio
 import os
