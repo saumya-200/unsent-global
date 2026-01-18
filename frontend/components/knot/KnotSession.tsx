@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import socketService from '../../lib/services/socketService';
-import { KnotSession as KnotSessionType, KnotSessionState } from '../../lib/types/knot.types';
+import { KnotState, KnotSession as KnotSessionType } from '../../lib/types/knot.types';
 import { KnotWaiting } from './KnotWaiting';
 import { KnotActive } from './KnotActive';
 import { KnotEnded } from './KnotEnded';
+import { ParticleBackground } from './effects/ParticleBackground';
 
 interface KnotSessionProps {
     starId: string;
@@ -12,139 +13,150 @@ interface KnotSessionProps {
 }
 
 export const KnotSession: React.FC<KnotSessionProps> = ({ starId, onExit }) => {
-    const [session, setSession] = useState<KnotSessionType>({
-        roomId: '',
-        starId: starId,
-        state: 'connecting',
-        partnerCount: 0,
-        remainingSeconds: 1800, // 30 minutes
-    });
+    const [sessionData, setSessionData] = useState<KnotSessionType | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [connectionState, setConnectionState] = useState<'connected' | 'connecting' | 'disconnected'>('connecting');
 
     useEffect(() => {
-        // Request Knot session
-        socketService.requestKnot(starId);
+        const socket = socketService.connect();
 
-        // Setup socket listeners
-        const handleWaiting = (data: any) => {
-            setSession(prev => ({
-                ...prev,
+        // Connection listeners
+        const onConnect = () => setConnectionState('connected');
+        const onDisconnect = () => setConnectionState('disconnected');
+        const onReconnectAttempt = () => setConnectionState('connecting');
+
+        socket.on('connect', onConnect);
+        socket.on('disconnect', onDisconnect);
+        socket.io.on('reconnect_attempt', onReconnectAttempt); // Access io manager for reconnect attempts
+
+        // Request to enter knot
+        socketService.enterKnot(starId);
+
+        // Session event listeners
+        const handleKnotUpdate = (data: any) => {
+            console.log('Knot update:', data);
+            setSessionData(prev => ({
                 roomId: data.room_id,
-                state: 'waiting',
-                partnerCount: 1,
+                partnerId: data.partner_id || (prev?.partnerId),
+                startTime: data.start_time, // This might be null if waiting
+                state: data.status === 'active' ? 'active' : 'waiting',
+                remainingSeconds: data.remaining_time || 1800,
             }));
         };
 
         const handleKnotStarted = (data: any) => {
-            setSession(prev => ({
-                ...prev,
+            console.log('Knot started:', data);
+            setSessionData({
                 roomId: data.room_id,
+                partnerId: data.partner_id,
+                startTime: data.start_time,
                 state: 'active',
-                partnerCount: 2,
-                remainingSeconds: data.duration,
-                startedAt: Date.now(),
-            }));
+                remainingSeconds: 1800,
+            });
         };
 
-        const handleTimerUpdate = (data: any) => {
-            setSession(prev => ({
+        const handleTimerUpdate = (data: { remaining_seconds: number }) => {
+            setSessionData(prev => prev ? ({
                 ...prev,
-                remainingSeconds: data.remaining_seconds,
-            }));
+                remainingSeconds: data.remaining_seconds
+            }) : null);
         };
 
-        const handleSessionEnded = (data: any) => {
-            setSession(prev => ({
-                ...prev,
-                state: 'ended',
-                endedAt: Date.now(),
-                endReason: data.reason,
-            }));
-        };
-
-        const handlePartnerLeft = (data: any) => {
-            setSession(prev => ({
+        const handleSessionEnded = (data: { reason: string; message: string }) => {
+            // We can transition to a local 'ended' state or just show the Ended component
+            // But usually we update the sessionData state to 'ended'
+            setSessionData(prev => prev ? ({
                 ...prev,
                 state: 'ended',
-                endedAt: Date.now(),
-                endReason: 'partner_left',
-            }));
+                endReason: data.reason
+            }) : null);
         };
 
-        const handleError = (data: any) => {
-            console.error('Knot error:', data);
-            // Show error toast or message
+        const handleError = (data: { message: string }) => {
+            setError(data.message);
         };
 
-        socketService.onWaitingForPartner(handleWaiting);
-        socketService.onKnotStarted(handleKnotStarted);
-        socketService.onTimerUpdate(handleTimerUpdate);
-        socketService.onSessionEnded(handleSessionEnded);
-        socketService.onPartnerLeft(handlePartnerLeft);
-        socketService.onError(handleError);
+        socketService.on('knot_update', handleKnotUpdate);
+        socketService.on('knot_started', handleKnotStarted);
+        socketService.on('timer_update', handleTimerUpdate);
+        socketService.on('session_ended', handleSessionEnded);
+        socketService.on('error', handleError);
 
-        // Cleanup
         return () => {
-            socketService.off('waiting_for_partner', handleWaiting);
+            socketService.leaveKnot();
+            socketService.disconnect();
+
+            socket.off('connect', onConnect);
+            socket.off('disconnect', onDisconnect);
+            socket.io.off('reconnect_attempt', onReconnectAttempt);
+
+            socketService.off('knot_update', handleKnotUpdate);
             socketService.off('knot_started', handleKnotStarted);
             socketService.off('timer_update', handleTimerUpdate);
             socketService.off('session_ended', handleSessionEnded);
-            socketService.off('partner_left', handlePartnerLeft);
             socketService.off('error', handleError);
         };
     }, [starId]);
 
-    const handleLeave = () => {
-        if (session.roomId) {
-            socketService.leaveKnot(session.roomId);
-        }
+    // Cleanup session state when exiting
+    const handleExit = () => {
+        socketService.leaveKnot();
         onExit();
     };
 
     return (
-        <AnimatePresence mode="wait">
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="fixed inset-0 z-50 bg-[#0a0a0f] overflow-hidden"
-            >
-                {/* Background gradient */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-pink-900/20" />
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#0a0a1a] text-white flex flex-col overflow-hidden"
+        >
+            <ParticleBackground />
 
-                {/* Exit button */}
-                <button
-                    onClick={handleLeave}
-                    className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-colors"
-                >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            {/* Connection Indicator */}
+            {connectionState !== 'connected' && (
+                <div className="absolute top-16 right-4 z-[60] px-4 py-2 rounded-full bg-yellow-500/20 backdrop-blur-md text-yellow-200 text-sm flex items-center gap-2 border border-yellow-500/30">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                    {connectionState === 'connecting' ? 'Connecting...' : 'Reconnecting...'}
+                </div>
+            )}
 
-                {/* Content based on state */}
-                <AnimatePresence mode="wait">
-                    {(session.state === 'connecting' || session.state === 'waiting') && (
-                        <KnotWaiting key="waiting" />
+            {error ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
+                    <h2 className="text-2xl text-red-400 mb-4">Connection Failed</h2>
+                    <p className="text-gray-400 mb-8">{error}</p>
+                    <button
+                        onClick={onExit}
+                        className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                    >
+                        Return to Star Map
+                    </button>
+                </div>
+            ) : !sessionData ? (
+                <div className="flex-1 flex items-center justify-center z-10">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                </div>
+            ) : (
+                <div className="flex-1 relative z-10 h-full">
+                    {sessionData.state === 'waiting' && (
+                        <KnotWaiting onCancel={handleExit} />
                     )}
 
-                    {session.state === 'active' && (
+                    {sessionData.state === 'active' && (
                         <KnotActive
-                            key="active"
-                            session={session}
-                            onLeave={handleLeave}
+                            session={sessionData}
+                            onLeave={handleExit}
                         />
                     )}
 
-                    {session.state === 'ended' && (
+                    {sessionData.state === 'ended' && (
                         <KnotEnded
-                            key="ended"
-                            reason={session.endReason}
-                            onClose={handleLeave}
+                            reason={sessionData.endReason || 'session_ended'}
+                            onExit={handleExit}
                         />
                     )}
-                </AnimatePresence>
-            </motion.div>
-        </AnimatePresence>
+                </div>
+            )}
+        </motion.div>
     );
 };
